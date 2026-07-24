@@ -15,17 +15,28 @@
 
 <div class="login-screen" id="loginScreen">
   <div class="login-card">
-    <div class="login-logo">🚗</div>
-    <div class="login-brand">IL TUO<br>NOLEGGIO</div>
-    <p class="login-sub">Accedi al gestionale demo</p>
+    <div class="login-logo-wrap">
+      <div class="login-wordmark">IL TUO<br>NOLEGGIO</div>
+      <div class="login-wordmark-sub">RENTAL CAR &amp; SCOOTER</div>
+    </div>
+
+    <h1 class="login-title">Area Admin</h1>
+    <p class="login-sub">Inserisci le tue credenziali per accedere</p>
+
     <form class="login-form" id="loginForm">
       <div class="form-field">
         <label for="loginEmail">Email</label>
-        <input type="email" id="loginEmail" placeholder="nome@esempio.com" autocomplete="username" required>
+        <div class="login-field-wrap">
+          <span class="material-symbols-outlined">mail</span>
+          <input type="email" id="loginEmail" placeholder="nome@esempio.com" autocomplete="username" required>
+        </div>
       </div>
       <div class="form-field">
         <label for="loginPassword">Password</label>
-        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" required>
+        <div class="login-field-wrap">
+          <span class="material-symbols-outlined">lock</span>
+          <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" required>
+        </div>
       </div>
       <div class="login-error hidden" id="loginError">
         <span class="material-symbols-outlined">error</span> Email o password non corretti.
@@ -34,6 +45,9 @@
         <span class="material-symbols-outlined">login</span> Accedi
       </button>
     </form>
+
+    <div class="login-divider"></div>
+    <p class="login-footer">© 2026 Il Tuo Noleggio. Riservato al personale autorizzato.</p>
   </div>
 </div>
 
