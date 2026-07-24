@@ -98,7 +98,7 @@ function initSidebarUser() {
   });
   document.getElementById("logoutBtn").addEventListener("click", () => {
     confirmAction("Vuoi davvero uscire dalla demo?", () => {
-      showToast("Logout effettuato (demo)", "success", "logout");
+      logout();
     }, "Esci");
   });
 }
@@ -109,7 +109,10 @@ function initMobileNav() {
   toggle.addEventListener("click", () => sidebar.classList.toggle("open"));
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+let appBooted = false;
+function bootApp() {
+  if (appBooted) return;
+  appBooted = true;
   initNav();
   initTopbar();
   initSidebarUser();
@@ -117,4 +120,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const initial = location.hash.replace("#", "");
   renderView(VIEW_RENDERERS[initial] ? initial : "pianificazione");
-});
+}
