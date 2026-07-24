@@ -403,7 +403,7 @@ function approveRequest(id) {
   const idx = BOOKING_REQUESTS.findIndex(r => r.id === id);
   if (idx > -1) {
     const r = BOOKING_REQUESTS[idx];
-    BOOKINGS.unshift({ id: r.id, customer: r.customer, phone: r.phone, vehicle: r.vehicle, start: r.start, end: r.end, days: 2, location: r.location, agent: "Vanny", status: "Confermata", total: r.total, extra: null });
+    BOOKINGS.unshift({ id: r.id, customer: r.customer, phone: r.phone, vehicle: r.vehicle, start: r.start, end: r.end, days: 2, location: r.location, agent: "Sara", status: "Confermata", total: r.total, extra: null });
     BOOKING_REQUESTS.splice(idx, 1);
   }
   showToast("Richiesta accettata e trasformata in prenotazione", "success", "check_circle");
@@ -452,11 +452,11 @@ function view_inventario() {
     <div class="vehicle-card">
       <div class="vname">${escapeHtml(v.name.toUpperCase())}</div>
       <div class="vprice">€${v.price}<span>/g</span></div>
-      <div class="vloc-row"><span>${icon("location_on")} Bari: ${v.bari}</span><span>${icon("location_on")} Monopoli: ${v.monopoli}</span></div>
+      <div class="vloc-row"><span>${icon("location_on")} Costalunga: ${v.bari}</span><span>${icon("location_on")} Marenova: ${v.monopoli}</span></div>
       <div class="disp-row"><span>Disponibilità</span><span>${totalAvail} / ${totalStock + 1}</span></div>
       <div class="progress"><div style="width:${pct}%;"></div></div>
       <div class="vcard-actions">
-        <button class="icon-action" title="Anteprima" onclick="openInfoModal('${escapeHtml(v.name)}',[{label:'Prezzo/giorno',value:'€${v.price}'},{label:'Bari',value:'${v.bari} disponibili'},{label:'Monopoli',value:'${v.monopoli} disponibili'}],'visibility')">${icon("visibility")}</button>
+        <button class="icon-action" title="Anteprima" onclick="openInfoModal('${escapeHtml(v.name)}',[{label:'Prezzo/giorno',value:'€${v.price}'},{label:'Costalunga',value:'${v.bari} disponibili'},{label:'Marenova',value:'${v.monopoli} disponibili'}],'visibility')">${icon("visibility")}</button>
         <button class="icon-action" title="Manutenzione" onclick="showToast('Veicolo segnato in manutenzione (demo)','success','build')">${icon("build")}</button>
         <button class="icon-action edit" title="Modifica" onclick="openEditVehicle('${v.id}')">${icon("edit")}</button>
         <button class="icon-action del" title="Elimina" onclick="confirmAction('Eliminare ${escapeHtml(v.name)} dall\\'inventario?', () => { showToast('Veicolo eliminato (demo)','success','delete'); }, 'Elimina', true)">${icon("delete")}</button>
@@ -585,8 +585,8 @@ let analyticsChart = null;
 function view_analytics() {
   const periodLabels = { "7": "7 giorni", "30": "30 giorni", "90": "3 mesi", "180": "6 mesi", "year": "Quest'anno", "all": "Tutto" };
   const factor = { "7": 0.25, "30": 1, "90": 2.8, "180": 5.2, "year": 7.5, "all": 12 }[uiState.analyticsPeriod];
-  const guadagnato = Math.round(74699.22 * factor);
-  const futuro = Math.round(124414.09 * (factor > 3 ? 1 : factor));
+  const guadagnato = Math.round(58230.5 * factor);
+  const futuro = Math.round(96380.75 * (factor > 3 ? 1 : factor));
 
   return `
     <div class="view-header">
@@ -604,19 +604,19 @@ function view_analytics() {
         <div class="hb-title">${icon("bolt")} INCASSO DA OGGI AL 31/12/2026</div>
         <div class="hb-sub">Prenotazioni attive + future — ${BOOKINGS.length + 40} noleggi nel periodo</div>
       </div>
-      <div class="hb-value">${fmtEuro(126898.49)}</div>
+      <div class="hb-value">${fmtEuro(101450.25)}</div>
     </div>
 
     <div class="stat-grid" style="grid-template-columns:1fr 1fr;">
       <div class="stat-card">
         <div class="stat-label">Guadagnato (periodo) <span class="stat-icon" style="background:var(--green-soft);color:var(--green);">${icon("trending_up")}</span></div>
         <div class="stat-value">${fmtEuro(guadagnato)}</div>
-        <div class="stat-sub">${Math.round(278 * factor)} noleggi</div>
+        <div class="stat-sub">${Math.round(196 * factor)} noleggi</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Futuro confermato <span class="stat-icon" style="background:var(--blue-soft);color:#7d9bff;">${icon("trending_down")}</span></div>
         <div class="stat-value">${fmtEuro(futuro)}</div>
-        <div class="stat-sub">304 noleggi</div>
+        <div class="stat-sub">231 noleggi</div>
       </div>
     </div>
 
@@ -638,8 +638,8 @@ function view_analytics() {
   `;
 }
 const ANALYTICS_MONTHS = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
-const ANALYTICS_PAST = [19200, 32300, 55100, 74100, 75700, 75300, 61700];
-const ANALYTICS_FUTURE = [0,0,0,0,0,12000,36200];
+const ANALYTICS_PAST = [8400, 15600, 26900, 38200, 41500, 44800, 35100];
+const ANALYTICS_FUTURE = [0,0,0,0,0,9800,22300];
 function renderAnalyticsTable() {
   const rows = ANALYTICS_MONTHS.slice(0, 7).map((m, i) => `
     <tr><td>${m}</td><td>${fmtEuroShort(ANALYTICS_PAST[i])}</td><td>${fmtEuroShort(ANALYTICS_FUTURE[i] || 0)}</td></tr>

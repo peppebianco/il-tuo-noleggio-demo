@@ -90,8 +90,8 @@ function initTopbar() {
 
 function initSidebarUser() {
   document.getElementById("userMenuBtn").addEventListener("click", () => {
-    openInfoModal("Vanny", [
-      { label: "Email", value: "vanny@iltuonoleggio.demo" },
+    openInfoModal("Sara Moretti", [
+      { label: "Email", value: "sara@iltuonoleggio.demo" },
       { label: "Ruolo", value: "Amministratore" },
       { label: "Ultimo accesso", value: fmtDate(new Date()) },
     ], "account_circle");
