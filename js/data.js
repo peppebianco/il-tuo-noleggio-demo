@@ -133,12 +133,15 @@ const LOGISTICS_TODAY = [
 
 // --- Noleggi attivi ---
 const ACTIVE_RENTALS = [
-  { vehicle: "Toyota Yaris Cros", code: "auto13", start: "24/07/2026 09:30", end: "24/07/2026 22:30", remaining: "5h 35min", customer: "Riccardo Gallo", phone: "+44 7700 900 512", agent: "Giulia" },
-  { vehicle: "Vespa Primavera 125CC", code: "Vespa Primavera 125 3", start: "24/07/2026 09:00", end: "24/07/2026 21:00", remaining: "4h 5min", customer: "Ilse Van der Berg", phone: "+31 6 5550 1187", agent: "Marco" },
-  { vehicle: "Opel Mokka", code: "auto3", start: "22/07/2026 15:30", end: "24/07/2026 19:00", remaining: "2h 5min", customer: "~Nadia Kowalski", phone: "+48 512 550 341", agent: "Sara" },
-  { vehicle: "Peugeot 2008", code: "Peugeot 2008 1", start: "20/07/2026 15:00", end: "24/07/2026 19:00", remaining: "2h 5min", customer: "Andrei Popescu", phone: "+40 722 550 318", agent: "Marco" },
-  { vehicle: "Piaggio Medley 125CC", code: "auto28", start: "24/07/2026 09:00", end: "24/07/2026 22:00", remaining: "5h 5min", customer: "~Emil Johansson", phone: "+46 70 550 2214", agent: "Sara" },
-  { vehicle: "Toyota Yaris", code: "Yaris 1", start: "24/07/2026 00:00", end: "24/07/2026 19:00", remaining: "1h 5min", customer: "Tommaso Ferraro", phone: "+39 320 555 0142", agent: "Sara" },
+  { vehicle: "Opel Corsa 1", code: "auto6", start: "25/07/2026 09:00", end: "25/07/2026 15:20", remaining: "18min", remainingMinutes: 18, customer: "Camilla Esposito", phone: "+39 347 555 0623", agent: "Giulia" },
+  { vehicle: "Toyota Yaris Cros", code: "auto13", start: "24/07/2026 09:30", end: "24/07/2026 22:30", remaining: "5h 35min", remainingMinutes: 335, customer: "Riccardo Gallo", phone: "+44 7700 900 512", agent: "Giulia" },
+  { vehicle: "Vespa Primavera 125CC", code: "Vespa Primavera 125 3", start: "24/07/2026 09:00", end: "24/07/2026 21:00", remaining: "4h 5min", remainingMinutes: 245, customer: "Ilse Van der Berg", phone: "+31 6 5550 1187", agent: "Marco" },
+  { vehicle: "Opel Mokka", code: "auto3", start: "22/07/2026 15:30", end: "24/07/2026 19:00", remaining: "2h 5min", remainingMinutes: 125, customer: "~Nadia Kowalski", phone: "+48 512 550 341", agent: "Sara" },
+  { vehicle: "Peugeot 2008", code: "Peugeot 2008 1", start: "20/07/2026 15:00", end: "24/07/2026 19:00", remaining: "2h 5min", remainingMinutes: 125, customer: "Andrei Popescu", phone: "+40 722 550 318", agent: "Marco" },
+  { vehicle: "Piaggio Medley 125CC", code: "auto28", start: "24/07/2026 09:00", end: "24/07/2026 22:00", remaining: "5h 5min", remainingMinutes: 305, customer: "~Emil Johansson", phone: "+46 70 550 2214", agent: "Sara" },
+  { vehicle: "Toyota Yaris", code: "Yaris 1", start: "24/07/2026 00:00", end: "24/07/2026 19:00", remaining: "1h 5min", remainingMinutes: 65, customer: "Tommaso Ferraro", phone: "+39 320 555 0142", agent: "Sara" },
+  { vehicle: "Jeep Renegade 1", code: "auto9", start: "24/07/2026 09:00", end: "26/07/2026 15:00", remaining: "1g 6h", remainingMinutes: 1800, customer: "Bartek Nowak", phone: "+48 601 550 774", agent: "Marco" },
+  { vehicle: "Vespa Primavera 125CC", code: "Vespa Primavera 125 4", start: "24/07/2026 09:00", end: "26/07/2026 23:00", remaining: "22h 37min", remainingMinutes: 1357, customer: "Zsófia Tóth", phone: "+36 30 555 0491", agent: "Giulia" },
 ];
 
 // --- Voucher ---

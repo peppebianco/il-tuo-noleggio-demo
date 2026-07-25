@@ -364,6 +364,16 @@ tbody tr:hover{background:var(--card-hover);}
 .clock-chip .material-symbols-outlined{font-size:16px;color:var(--accent);margin-bottom:2px;}
 .clock-chip b{font-size:14px;}
 .clock-chip span{font-size:9px;color:var(--text-faint);font-weight:700;letter-spacing:.4px;}
+.clock-chip.red{background:#e5484d;border-color:transparent;}
+.clock-chip.red .material-symbols-outlined,.clock-chip.red b{color:#fff;}
+.clock-chip.red span{color:rgba(255,255,255,.8);}
+.clock-chip.orange{background:#ff8a1e;border-color:transparent;}
+.clock-chip.orange .material-symbols-outlined,.clock-chip.orange b{color:#241700;}
+.clock-chip.orange span{color:rgba(0,0,0,.55);}
+.clock-chip.green{background:var(--green);border-color:transparent;}
+.clock-chip.green .material-symbols-outlined,.clock-chip.green b{color:#06210f;}
+.clock-chip.green span{color:rgba(0,0,0,.55);}
+.select-pill.vivid{background:#ff8a1e;color:#241700;border-color:transparent;font-weight:800;}
 
 /* ---------- LOGISTICA: colori più accesi ---------- */
 .info-row.vivid{cursor:pointer;transition:transform .12s,box-shadow .12s;}

@@ -279,9 +279,17 @@ function openMovementDetail(idx) {
 // NOLEGGI ATTIVI
 // ==================================================================
 function view_attivi() {
-  const rows = ACTIVE_RENTALS.map(r => `
-    <div class="info-row">
-      <div class="clock-chip">${icon("schedule")}<b>${r.remaining}</b><span>RIMASTO</span></div>
+  const rows = ACTIVE_RENTALS.map(r => {
+    const urgency = r.remainingMinutes < 60 ? "red" : (r.remainingMinutes <= 720 ? "orange" : "green");
+    return `
+    <div class="info-row vivid" onclick="openInfoModal('${escapeHtml(r.vehicle)}',[
+      {label:'Cliente', value:'${escapeHtml(r.customer)}'},
+      {label:'Telefono', value:'${escapeHtml(r.phone)}'},
+      {label:'Periodo', value:'${r.start} → ${r.end}'},
+      {label:'Tempo rimasto', value:'${r.remaining}'},
+      {label:'Gestore', value:'${r.agent}'}
+    ],'directions_car')">
+      <div class="clock-chip ${urgency}">${icon("schedule")}<b>${r.remaining}</b><span>RIMASTO</span></div>
       <div class="info-main">
         <div class="info-title-row">
           <span class="info-title">${escapeHtml(r.vehicle.toUpperCase())}</span>
@@ -292,14 +300,15 @@ function view_attivi() {
           <span>${icon("person")} ${escapeHtml(r.customer)} · ${escapeHtml(r.phone)}</span>
         </div>
       </div>
-      <div class="info-actions">
+      <div class="info-actions" onclick="event.stopPropagation()">
         <button class="icon-action wa" title="WhatsApp" onclick="showToast('Apertura chat WhatsApp con ${escapeHtml(r.customer)} (demo)','success','forum')">${icon("forum")} WA</button>
-        <select class="select-pill" onchange="showToast('Gestore aggiornato a ' + this.value,'success')">
+        <select class="select-pill vivid" onchange="showToast('Gestore aggiornato a ' + this.value,'success')">
           ${AGENTS.map(a => `<option ${a === r.agent ? "selected" : ""}>${a}</option>`).join("")}
         </select>
       </div>
     </div>
-  `).join("");
+  `;
+  }).join("");
   return `
     <div class="view-header">
       <div>
