@@ -10,6 +10,7 @@ const uiState = {
   prenotazioniSearch: "",
   analyticsPeriod: "30",
   analyticsMode: "grafico",
+  analyticsRequestSort: "totale",
   partnerTab: "codici",
   chatActive: 0,
 };
@@ -153,34 +154,39 @@ function view_logistica() {
   const ritiri = LOGISTICS_TODAY.filter(x => x.type === "ritiro");
   const consegneTot = consegne.reduce((s, x) => s + x.price, 0);
 
-  const rows = list.map((x, i) => `
-    <div class="info-row ${x.type}">
-      <div class="time-badge">
+  const rows = list.map((x) => {
+    const idx = LOGISTICS_TODAY.indexOf(x);
+    const isConsegna = x.type === "consegna";
+    return `
+    <div class="info-row ${x.type} vivid" onclick="openMovementDetail(${idx})">
+      <div class="time-badge ${isConsegna ? "blue" : "orange"}">
         ${x.time}
-        <span class="lbl">${x.type === "consegna" ? "CONSEGNA" : "RITIRO"}</span>
+        <span class="lbl">${isConsegna ? "CONSEGNA" : "RITIRO"}</span>
         <span class="amt">€${x.price}</span>
       </div>
       <div class="info-main">
         <div class="info-title-row">
           <span class="info-title">${escapeHtml(x.vehicle.toUpperCase())}</span>
-          ${x.code ? `<span class="tag">${x.code}</span>` : ""}
+          ${x.code ? `<span class="tag-vivid ${isConsegna ? "blue" : "orange"}">${x.code}</span>` : ""}
         </div>
         <div class="info-customer">
           <span>${icon("person")} ${escapeHtml(x.customer)} · ${escapeHtml(x.phone)}</span>
-          <span class="tag agent">${x.agent}</span>
+          <span class="tag-vivid agent">${x.agent}</span>
           <span class="tag">#${x.ref}</span>
         </div>
         <div class="info-loc">${icon("location_on")} ${escapeHtml(x.location)} ${x.tag ? `<span class="tag" style="margin-left:8px;">${x.tag}</span>` : ""}</div>
       </div>
-      <div class="info-actions">
-        <button class="icon-action" title="Allegati" onclick="showToast('Nessun allegato presente (demo)')">${icon("attach_file")}</button>
-        <button class="icon-action edit" title="Modifica" onclick="openInfoModal('Modifica movimento',[{label:'Veicolo',value:'${escapeHtml(x.vehicle)}'},{label:'Cliente',value:'${escapeHtml(x.customer)}'},{label:'Orario',value:'${x.time}'}],'edit')">${icon("edit")}</button>
+      <div class="info-actions" onclick="event.stopPropagation()">
+        <button class="icon-action blue" title="Allegati" onclick="showToast('Nessun allegato presente (demo)')">${icon("attach_file")}</button>
+        <button class="icon-action orange" title="Modifica" onclick="openInfoModal('Modifica movimento',[{label:'Veicolo',value:'${escapeHtml(x.vehicle)}'},{label:'Cliente',value:'${escapeHtml(x.customer)}'},{label:'Orario',value:'${x.time}'}],'edit')">${icon("edit")}</button>
         <button class="icon-action wa" title="WhatsApp" onclick="showToast('Apertura chat WhatsApp con ${escapeHtml(x.customer)} (demo)','success','forum')">${icon("forum")}</button>
-        <button class="icon-action" title="Apri" onclick="renderView('prenotazioni')">${icon("open_in_new")}</button>
+        <button class="icon-action blue" title="Apri" onclick="renderView('prenotazioni')">${icon("open_in_new")}</button>
         <button class="icon-action del" title="Elimina" onclick="confirmAction('Eliminare il movimento di ${escapeHtml(x.customer)}?', () => { showToast('Movimento eliminato (demo)','success','delete'); }, 'Elimina', true)">${icon("delete")}</button>
+        <button class="btn-confirm-move ${isConsegna ? "blue" : "orange"}" onclick="confirmMovement(${idx})">${icon("check")} ${isConsegna ? "Consegna" : "Ritiro"}</button>
       </div>
     </div>
-  `).join("");
+  `;
+  }).join("");
 
   return `
     <div class="view-header">
@@ -226,6 +232,47 @@ function logisticsSearch(q) {
   document.querySelectorAll("#logisticsList .info-row").forEach(row => {
     row.style.display = row.textContent.toLowerCase().includes(q) ? "" : "none";
   });
+}
+function confirmMovement(idx) {
+  const x = LOGISTICS_TODAY[idx];
+  const label = x.type === "consegna" ? "Consegna" : "Ritiro";
+  showToast(`${label} confermata per ${escapeHtml(x.customer)}`, "success", "check_circle");
+}
+
+function openMovementDetail(idx) {
+  const x = LOGISTICS_TODAY[idx];
+  const isConsegna = x.type === "consegna";
+  const fmtDT = (d) => `${fmtDate(d)} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  openModal(`
+    <div class="modal-head movement-head">
+      <span class="pill ${isConsegna ? "blue" : "orange"}" style="font-size:12px;padding:6px 12px;">${icon(isConsegna ? "local_shipping" : "swap_horiz", "")} ${isConsegna ? "CONSEGNA" : "RITIRO"}</span>
+      <button class="modal-close" onclick="closeModal()">${icon("close")}</button>
+    </div>
+    <div class="modal-body">
+      <div class="movement-title-row">
+        <h2 class="movement-title">${escapeHtml(x.vehicle.toUpperCase())}</h2>
+        <div class="movement-received">
+          Ricevuta il ${fmtDate(x.receivedDate)}
+          <span class="tag" style="margin-left:8px;">#${x.ref}</span>
+        </div>
+      </div>
+
+      <div class="movement-field"><span class="material-symbols-outlined">event</span><div><label>Data</label><b>${fmtDate(x.deliveryDateTime)}</b></div></div>
+      <div class="movement-field"><span class="material-symbols-outlined">schedule</span><div><label>Orario</label><b>${x.time}</b></div></div>
+      <div class="movement-field"><span class="material-symbols-outlined">local_shipping</span><div><label>Data Consegna</label><b class="mv-blue">${fmtDT(x.deliveryDateTime)}</b></div></div>
+      <div class="movement-field"><span class="material-symbols-outlined">assignment_return</span><div><label>Data Riconsegna</label><b class="mv-purple">${fmtDT(x.returnDateTime)}</b></div></div>
+      <div class="movement-field"><span class="material-symbols-outlined">local_shipping</span><div><label>Consegna</label><b>${escapeHtml(x.deliveryAddress)} <a href="#" class="mv-link" onclick="event.preventDefault();showToast('Apertura Maps (demo)','info','map')">Maps</a></b></div></div>
+      <div class="movement-field"><span class="material-symbols-outlined">near_me</span><div><label>Riconsegna</label><b>${escapeHtml(x.returnAddress)} <a href="#" class="mv-link" onclick="event.preventDefault();showToast('Apertura Maps (demo)','info','map')">Maps</a></b></div></div>
+      <div class="movement-field"><span class="material-symbols-outlined">call</span><div><label>Telefono</label><b>${escapeHtml(x.phone)} <a href="#" class="mv-link mv-green" onclick="event.preventDefault();showToast('Apertura chat WhatsApp (demo)','success','forum')">WhatsApp</a></b></div></div>
+      <div class="movement-field"><span class="material-symbols-outlined">mail</span><div><label>Email</label><b class="mv-blue">${escapeHtml(x.email)}</b></div></div>
+      <div class="movement-field"><span class="material-symbols-outlined">home_pin</span><div><label>Indirizzo Cliente</label><b>${escapeHtml(x.clientAddress)}</b></div></div>
+      ${x.tag ? `<div class="movement-field"><span class="material-symbols-outlined">info</span><div><label>Note</label><b>${escapeHtml(x.tag)}</b></div></div>` : ""}
+    </div>
+    <div class="modal-foot">
+      <button class="btn subtle" onclick="closeModal()">Chiudi</button>
+      <button class="btn-primary" onclick="closeModal(); confirmMovement(${idx});">${icon("check")} Conferma ${isConsegna ? "Consegna" : "Ritiro"}</button>
+    </div>
+  `, { width: "520px" });
 }
 
 // ==================================================================
@@ -999,8 +1046,105 @@ function view_analytics() {
         ? `<div style="height:300px;"><canvas id="analyticsCanvas"></canvas></div>`
         : renderAnalyticsTable()}
     </div>
+
+    ${renderRequestsSection()}
   `;
 }
+
+function vehicleRequestStats(vIndex, v) {
+  const totale = Math.round(20 + seededRand(vIndex + 501) * 55);
+  const chiusoPct = 0.3 + seededRand(vIndex + 502) * 0.35;
+  const chiuso = Math.max(1, Math.round(totale * chiusoPct));
+  const futuro = Math.max(0, totale - chiuso);
+  const chiusoGiorni = chiuso * (1 + Math.round(seededRand(vIndex + 503) * 3));
+  const futuroGiorni = futuro * (1 + Math.round(seededRand(vIndex + 504) * 3));
+  const chiusoImporto = Math.round(chiusoGiorni * v.price * (0.85 + seededRand(vIndex + 505) * 0.3));
+  const futuroImporto = Math.round(futuroGiorni * v.price * (0.85 + seededRand(vIndex + 506) * 0.3));
+  const totaleImporto = chiusoImporto + futuroImporto;
+  const pctPassato = totaleImporto > 0 ? Math.round((chiusoImporto / totaleImporto) * 100) : 0;
+  return { totale, chiuso, futuro, chiusoGiorni, futuroGiorni, chiusoImporto, futuroImporto, totaleImporto, pctPassato };
+}
+
+function renderRequestsSection() {
+  const stats = VEHICLES.map((v, i) => ({ v, i, ...vehicleRequestStats(i, v) }));
+  const totRicevute = stats.reduce((s, x) => s + x.totale, 0);
+
+  const sortKey = uiState.analyticsRequestSort;
+  const sorted = [...stats].sort((a, b) => {
+    if (sortKey === "chiuso") return b.chiusoImporto - a.chiusoImporto;
+    if (sortKey === "futuro") return b.futuroImporto - a.futuroImporto;
+    return b.totaleImporto - a.totaleImporto;
+  });
+
+  const rows = sorted.map(s => `
+    <div class="request-row">
+      <div class="request-row-head">
+        <div>
+          <div class="request-vname">${escapeHtml(s.v.name.toUpperCase())}</div>
+          <div class="request-vsub">${s.totale} noleggi tot</div>
+        </div>
+        <div class="request-total">
+          <span>TOTALE</span>
+          <b>${fmtEuro(s.totaleImporto)}</b>
+        </div>
+      </div>
+      <div class="request-split">
+        <div class="request-split-col">
+          <span class="request-split-label chiuso">CHIUSO</span>
+          <b>${fmtEuro(s.chiusoImporto)}</b>
+          <span class="request-split-sub">${s.chiuso} nol. · ${s.chiusoGiorni} gg</span>
+        </div>
+        <div class="request-split-col right">
+          <span class="request-split-label futuro">FUTURO</span>
+          <b>${fmtEuro(s.futuroImporto)}</b>
+          <span class="request-split-sub">${s.futuro} nol. · ${s.futuroGiorni} gg</span>
+        </div>
+      </div>
+      <div class="request-bar">
+        <div class="request-bar-fill" style="width:${s.pctPassato}%;"></div>
+      </div>
+      <div class="request-bar-labels">
+        <span class="chiuso">${s.pctPassato}% passato</span>
+        <span class="futuro">${100 - s.pctPassato}% futuro</span>
+      </div>
+    </div>
+  `).join("");
+
+  return `
+    <div class="requests-section">
+      <div class="requests-title">${icon("public")} RICHIESTE — DAL ${fmtDate(addDays(new Date(), -122)).toUpperCase()}</div>
+      <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat-card requests-stat">
+          <div class="stat-label">Ricevute dal sito <span class="stat-icon" style="background:var(--orange-soft);color:var(--orange);">${icon("public")}</span></div>
+          <div class="stat-value">${totRicevute}</div>
+          <div class="stat-sub" style="color:var(--green);">100% accettazione</div>
+        </div>
+        <div class="stat-card requests-stat">
+          <div class="stat-label">Accettate <span class="stat-icon" style="background:var(--green-soft);color:var(--green);">${icon("check_circle")}</span></div>
+          <div class="stat-value" style="color:var(--green);">${totRicevute}</div>
+        </div>
+        <div class="stat-card requests-stat">
+          <div class="stat-label">Rifiutate <span class="stat-icon" style="background:var(--red-soft);color:#ff8080;">${icon("cancel")}</span></div>
+          <div class="stat-value" style="color:#ff8080;">0</div>
+        </div>
+        <div class="stat-card requests-stat">
+          <div class="stat-label">In Attesa <span class="stat-icon" style="background:var(--orange-soft);color:var(--orange);">${icon("schedule")}</span></div>
+          <div class="stat-value" style="color:var(--orange);">0</div>
+        </div>
+      </div>
+
+      <div class="chip-group" style="margin:18px 0;">
+        <span style="color:var(--text-faint);font-size:12.5px;font-weight:700;align-self:center;margin-right:4px;">ORDINA PER:</span>
+        <button class="chip ${sortKey === "totale" ? "active" : ""}" onclick="analyticsSetRequestSort('totale')">Totale</button>
+        <button class="chip ${sortKey === "chiuso" ? "active" : ""}" onclick="analyticsSetRequestSort('chiuso')">Chiuso</button>
+        <button class="chip ${sortKey === "futuro" ? "active" : ""}" onclick="analyticsSetRequestSort('futuro')">Futuro</button>
+      </div>
+
+      <div class="requests-list">${rows}</div>
+    </div>
+  `;
+}
+function analyticsSetRequestSort(s) { uiState.analyticsRequestSort = s; renderView("analytics"); }
 const ANALYTICS_MONTHS = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
 const ANALYTICS_PAST = [8400, 15600, 26900, 38200, 41500, 44800, 35100];
 const ANALYTICS_FUTURE = [0,0,0,0,0,9800,22300];

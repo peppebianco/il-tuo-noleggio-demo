@@ -102,6 +102,35 @@ const LOGISTICS_TODAY = [
   { time: "19:30", type: "ritiro", vehicle: "Opel Corsa 1", code: 1, customer: "Andrei Popescu", phone: "+40 722 550 318", agent: "Sara", ref: "DM172", price: 163.9, location: "Marenova" },
 ];
 
+// Arricchisce ogni movimento con i dati necessari al dettaglio (date, indirizzi,
+// email...) senza doverli ripetere a mano per ogni riga sopra.
+(function enrichLogistics() {
+  const CLIENT_STREETS = ["Norwood Road 4B", "Rue de la Paix 12", "Musterstraße 8", "Ulica Kwiatowa 21", "Utca Fő utca 15", "Calle Mayor 9", "Strada Verde 3", "Kerkstraat 22"];
+  function emailFrom(name) {
+    const stripDiacritics = new RegExp("[\\u0300-\\u036f]", "g");
+    return name.toLowerCase().normalize("NFD").replace(stripDiacritics, "").replace(/[^a-z\s]/g, "").trim().split(/\s+/).join(".") + "@example.com";
+  }
+  LOGISTICS_TODAY.forEach((x, i) => {
+    const [hh, mm] = x.time.split(":").map(Number);
+    const deliveryDateTime = new Date();
+    deliveryDateTime.setHours(hh, mm, 0, 0);
+    const rentalDays = 1 + (i % 4);
+    const returnDateTime = new Date(deliveryDateTime);
+    returnDateTime.setDate(returnDateTime.getDate() + rentalDays);
+    returnDateTime.setHours(17, 0, 0, 0);
+    const received = new Date();
+    received.setDate(received.getDate() - (2 + (i % 5)));
+
+    x.email = emailFrom(x.customer);
+    x.clientAddress = pick(CLIENT_STREETS, i);
+    x.deliveryAddress = x.location + (i % 3 === 0 ? "" : ", Zona Arrivi");
+    x.returnAddress = i % 4 === 0 ? pick(CLIENT_STREETS, i + 2) : x.deliveryAddress;
+    x.deliveryDateTime = deliveryDateTime;
+    x.returnDateTime = returnDateTime;
+    x.receivedDate = received;
+  });
+})();
+
 // --- Noleggi attivi ---
 const ACTIVE_RENTALS = [
   { vehicle: "Toyota Yaris Cros", code: "auto13", start: "24/07/2026 09:30", end: "24/07/2026 22:30", remaining: "5h 35min", customer: "Riccardo Gallo", phone: "+44 7700 900 512", agent: "Giulia" },
@@ -185,6 +214,42 @@ const CHATS = [
     { from: "them", text: "Buongiorno, avrei bisogno del voucher per Villa Aurora Resort.", time: "lun" },
     { from: "bot", text: "Certo Francesca! Il voucher verrà inviato automaticamente alla tua email entro oggi.", time: "lun" },
     { from: "them", text: "Va bene, confermo il voucher", time: "lun" },
+  ]},
+  { name: "Grace Whitfield", last: "Perfect, thank you so much for your help!", unread: 0, botActive: true, messages: [
+    { from: "them", text: "Hi! I'd like to know if I can add a second driver to my booking.", time: "14:02" },
+    { from: "bot", text: "Hello Grace! Yes, you can add a second driver for €15 total for the whole rental. Would you like me to add it now?", time: "14:03" },
+    { from: "them", text: "Yes please, my husband will be driving too sometimes.", time: "14:05" },
+    { from: "bot", text: "Done! I've added a second driver to your Peugeot Traveller 9p booking. Please remember to bring both driving licences at pickup.", time: "14:05" },
+    { from: "them", text: "Great. One more thing - is the airport pickup point inside the terminal or outside?", time: "14:10" },
+    { from: "bot", text: "Our desk is right outside Arrivals, next to the car rental kiosks - you'll see our orange sign 🚗", time: "14:11" },
+    { from: "them", text: "Perfect, thank you so much for your help!", time: "14:12" },
+  ]},
+  { name: "Marion Lambert", last: "D'accord, merci beaucoup !", unread: 0, botActive: true, messages: [
+    { from: "them", text: "Bonjour, je voudrais savoir si le GPS est inclus avec la voiture ?", time: "10:30" },
+    { from: "bot", text: "Bonjour Marion ! Le GPS n'est pas inclus de base, mais vous pouvez l'ajouter pour 5€/jour. Souhaitez-vous que je l'ajoute à votre réservation ?", time: "10:31" },
+    { from: "them", text: "Oui, ajoutez-le s'il vous plaît. Et le paiement se fait comment ?", time: "10:33" },
+    { from: "bot", text: "Très bien, GPS ajouté ✅ Le paiement se fait par carte bancaire directement au comptoir lors du retrait du véhicule, ou en ligne dès maintenant si vous préférez.", time: "10:34" },
+    { from: "them", text: "Je préfère payer sur place. Merci !", time: "10:36" },
+    { from: "bot", text: "Parfait, c'est noté. Vous recevrez un e-mail de confirmation avec tous les détails de la réservation.", time: "10:36" },
+    { from: "them", text: "D'accord, merci beaucoup !", time: "10:40" },
+  ]},
+  { name: "Noah Fischer", last: "Alles klar, vielen Dank!", unread: 1, botActive: true, messages: [
+    { from: "them", text: "Hallo, ich wollte fragen, ob eine Vollkaskoversicherung verfügbar ist?", time: "16:20" },
+    { from: "bot", text: "Hallo Noah! Ja, wir bieten eine Vollkaskoversicherung mit Selbstbeteiligung von nur 100€ für 8€ pro Tag an. Möchten Sie diese hinzufügen?", time: "16:21" },
+    { from: "them", text: "Ja, das klingt gut. Können Sie das für die ganze Mietdauer hinzufügen?", time: "16:23" },
+    { from: "bot", text: "Erledigt! Die Vollkaskoversicherung wurde für die gesamte Mietdauer (6 Tage) hinzugefügt. Gesamtkosten: 48€.", time: "16:24" },
+    { from: "them", text: "Super. Und wo genau finde ich das Fahrzeug bei der Abholung?", time: "16:26" },
+    { from: "bot", text: "Sie finden unseren Schalter direkt am Flughafenterminal, Ausgang B, gegenüber vom Café.", time: "16:27" },
+    { from: "them", text: "Alles klar, vielen Dank!", time: "16:28" },
+  ]},
+  { name: "Sofie Willems", last: "Top, bedankt voor de snelle hulp!", unread: 0, botActive: false, messages: [
+    { from: "them", text: "Hoi, ik wil mijn huurperiode graag met 2 dagen verlengen. Kan dat nog?", time: "11:05" },
+    { from: "bot", text: "Hoi Sofie! Een verlenging kan zeker, maar omdat het minder dan 48 uur voor je terugkeer is, verbind ik je door met een medewerker om de beschikbaarheid te bevestigen.", time: "11:06" },
+    { from: "system", text: "Un operatore ha preso in carico la conversazione", time: "11:10" },
+    { from: "me", text: "Hallo Sofie, ik heb het nagekeken: de Citroën C4 is nog beschikbaar. Ik verleng je boeking met 2 dagen, dat komt neer op €136 extra.", time: "11:14" },
+    { from: "them", text: "Perfect, dat is goed. Kunnen jullie de bevestiging naar mijn e-mail sturen?", time: "11:16" },
+    { from: "me", text: "Zeker, de bevestiging is net verstuurd naar je e-mailadres.", time: "11:18" },
+    { from: "them", text: "Top, bedankt voor de snelle hulp!", time: "11:20" },
   ]},
 ];
 
