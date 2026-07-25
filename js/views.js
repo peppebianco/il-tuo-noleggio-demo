@@ -487,39 +487,176 @@ function inventarioSearch(q) {
     c.style.display = c.textContent.toLowerCase().includes(q) ? "" : "none";
   });
 }
+function vehicleFormFields(v) {
+  const cat = v ? v.cat : "SCOOTER";
+  const price = v ? v.price : "";
+  const avail = v ? (v.bari + v.monopoli) : 1;
+  return `
+    <div class="form-field">
+      <label>Nome Modello *</label>
+      <input id="vehName" placeholder="Es. Vespa 125 Primavera" value="${v ? escapeHtml(v.name) : ""}">
+    </div>
+    <div class="form-row2">
+      <div class="form-field">
+        <label>Categoria</label>
+        <select id="vehCat">
+          <option value="AUTOVEICOLI" ${cat === "AUTOVEICOLI" ? "selected" : ""}>Auto</option>
+          <option value="SCOOTER" ${cat === "SCOOTER" ? "selected" : ""}>Scooter</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Tipologia Breve</label>
+        <input id="vehTipologia" placeholder="Es. Scooter 125cc">
+      </div>
+    </div>
+    <div class="form-row2">
+      <div class="form-field">
+        <label>Badge (opzionale)</label>
+        <input id="vehBadge" placeholder="Es. NOVITÀ, Premium, Hybrid...">
+      </div>
+      <div class="form-field">
+        <label>Prezzo al giorno (€)</label>
+        <input id="vehPrice" type="number" placeholder="25" value="${price}">
+      </div>
+    </div>
+    <div class="form-row2">
+      <div class="form-field">
+        <label>Unità disponibili</label>
+        <input id="vehAvail" type="number" min="0" value="${avail}">
+      </div>
+      <div class="form-field">
+        <label>Unità totali</label>
+        <input id="vehTotal" type="number" min="1" value="${avail || 1}">
+      </div>
+    </div>
+    <div class="form-row2">
+      <div class="form-field">
+        <label>Alimentazione / Motore</label>
+        <select id="vehEngine">
+          <option value="">— Seleziona —</option>
+          <option>Benzina</option>
+          <option>Diesel</option>
+          <option>Elettrico</option>
+          <option>Ibrido</option>
+          <option>GPL</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Cambio</label>
+        <select id="vehGearbox">
+          <option value="">— Seleziona —</option>
+          <option>Manuale</option>
+          <option>Automatico</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row2">
+      <div class="form-field">
+        <label>Posti</label>
+        <select id="vehSeats">
+          <option value="">— Seleziona —</option>
+          <option>2</option>
+          <option>4</option>
+          <option>5</option>
+          <option>7</option>
+          <option>9</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Colore Identificativo (Logistica)</label>
+        <div class="color-picker-row">
+          <input id="vehColor" type="color" value="#ff5c00" oninput="document.getElementById('vehColorHex').textContent=this.value.toUpperCase()">
+          <span class="color-hex" id="vehColorHex">#FF5C00</span>
+        </div>
+      </div>
+    </div>
+    <div class="form-field">
+      <label>Foto Veicolo</label>
+      <div class="photo-upload-row">
+        <div class="photo-preview" id="vehPhotoPreview">No Foto</div>
+        <div>
+          <button type="button" class="btn" onclick="document.getElementById('vehPhotoInput').click()">${icon("add_photo_alternate")} Carica Foto</button>
+          <input type="file" id="vehPhotoInput" accept="image/png,image/jpeg,image/webp" class="hidden" onchange="handleVehiclePhotoChange(this)">
+          <div class="photo-hint">JPG, PNG o WebP. Max 5MB.</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function handleVehiclePhotoChange(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    showToast("Il file supera i 5MB consentiti", "error", "error");
+    input.value = "";
+    return;
+  }
+  const url = URL.createObjectURL(file);
+  const preview = document.getElementById("vehPhotoPreview");
+  preview.innerHTML = `<img src="${url}" alt="Anteprima veicolo">`;
+}
+
 function openAddVehicle() {
   openModal(`
     <div class="modal-head"><h2>${icon("add_circle")} Aggiungi Veicolo</h2><button class="modal-close" onclick="closeModal()">${icon("close")}</button></div>
     <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-field"><label>Nome veicolo</label><input placeholder="Es. Fiat Panda 2"></div>
-        <div class="form-row2">
-          <div class="form-field"><label>Prezzo / giorno (€)</label><input type="number" placeholder="60"></div>
-          <div class="form-field"><label>Categoria</label><select><option>AUTOVEICOLI</option><option>SCOOTER</option></select></div>
-        </div>
-      </div>
+      <div class="form-grid">${vehicleFormFields(null)}</div>
     </div>
     <div class="modal-foot">
       <button class="btn subtle" onclick="closeModal()">Annulla</button>
-      <button class="btn-primary" onclick="closeModal(); showToast('Veicolo aggiunto (demo)','success','check_circle');">Salva Veicolo</button>
+      <button class="btn-primary" onclick="submitAddVehicle()">Salva Veicolo</button>
     </div>
-  `, { width: "480px" });
+  `, { width: "620px" });
 }
+
+function submitAddVehicle() {
+  const name = document.getElementById("vehName").value.trim();
+  if (!name) {
+    showToast("Il nome del modello è obbligatorio", "error", "error");
+    return;
+  }
+  const cat = document.getElementById("vehCat").value;
+  const price = Number(document.getElementById("vehPrice").value) || 0;
+  const avail = Number(document.getElementById("vehAvail").value) || 0;
+  VEHICLES.push({
+    id: name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + (VEHICLES.length + 1),
+    name, cat, price,
+    bari: avail, monopoli: 0,
+  });
+  closeModal();
+  showToast(`${name} aggiunto all'inventario`, "success", "check_circle");
+  if (currentView === "inventario") renderView("inventario");
+}
+
 function openEditVehicle(id) {
   const v = VEHICLES.find(x => x.id === id);
   openModal(`
     <div class="modal-head"><h2>${icon("edit")} Modifica ${escapeHtml(v.name)}</h2><button class="modal-close" onclick="closeModal()">${icon("close")}</button></div>
     <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-field"><label>Nome veicolo</label><input value="${escapeHtml(v.name)}"></div>
-        <div class="form-field"><label>Prezzo / giorno (€)</label><input type="number" value="${v.price}"></div>
-      </div>
+      <div class="form-grid">${vehicleFormFields(v)}</div>
     </div>
     <div class="modal-foot">
       <button class="btn subtle" onclick="closeModal()">Annulla</button>
-      <button class="btn-primary" onclick="closeModal(); showToast('Modifiche salvate (demo)','success','check_circle');">Salva Modifiche</button>
+      <button class="btn-primary" onclick="submitEditVehicle('${v.id}')">Salva Modifiche</button>
     </div>
-  `, { width: "480px" });
+  `, { width: "620px" });
+}
+
+function submitEditVehicle(id) {
+  const v = VEHICLES.find(x => x.id === id);
+  const name = document.getElementById("vehName").value.trim();
+  if (!name) {
+    showToast("Il nome del modello è obbligatorio", "error", "error");
+    return;
+  }
+  v.name = name;
+  v.cat = document.getElementById("vehCat").value;
+  v.price = Number(document.getElementById("vehPrice").value) || v.price;
+  v.bari = Number(document.getElementById("vehAvail").value) || 0;
+  closeModal();
+  showToast("Modifiche salvate", "success", "check_circle");
+  if (currentView === "inventario") renderView("inventario");
 }
 
 // ==================================================================
