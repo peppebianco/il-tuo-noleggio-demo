@@ -831,7 +831,16 @@ function view_clienti() {
     </tr>
   `).join("");
   return `
-    <div class="view-header"><div><h1 class="view-title">Clienti</h1><p class="view-subtitle">Anagrafica e storico prenotazioni.</p></div></div>
+    <div class="view-header">
+      <div>
+        <h1 class="view-title">Clienti</h1>
+        <p class="view-subtitle">Gestisci l'anagrafica clienti e la loro fidelizzazione. (${CUSTOMERS_TOTAL_COUNT} totali)</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn" onclick="showToast('Export CSV avviato (demo)','success','download')">${icon("download")} Export</button>
+        <button class="btn-primary" onclick="openNewCustomer()">${icon("add")} Nuovo Cliente</button>
+      </div>
+    </div>
     <div class="searchbar" id="clientiSearchBar">${icon("search")}<input placeholder="Cerca nome, email o telefono..." oninput="clientiSearch(this.value)"></div>
     <div class="table-wrap">
       <table>
@@ -846,6 +855,39 @@ function clientiSearch(q) {
   document.querySelectorAll("#clientiBody tr").forEach(r => {
     r.style.display = r.textContent.toLowerCase().includes(q) ? "" : "none";
   });
+}
+function openNewCustomer() {
+  openModal(`
+    <div class="modal-head"><h2>${icon("person_add")} Nuovo Cliente</h2><button class="modal-close" onclick="closeModal()">${icon("close")}</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field"><label>Nome e cognome</label><input id="custName" placeholder="Mario Rossi"></div>
+        <div class="form-row2">
+          <div class="form-field"><label>Email</label><input id="custEmail" type="email" placeholder="mario.rossi@email.com"></div>
+          <div class="form-field"><label>Telefono</label><input id="custPhone" placeholder="+39 ..."></div>
+        </div>
+        <div class="form-field"><label>Note (opzionale)</label><textarea rows="2" placeholder="Note aggiuntive..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn subtle" onclick="closeModal()">Annulla</button>
+      <button class="btn-primary" onclick="submitNewCustomer()">Salva Cliente</button>
+    </div>
+  `, { width: "480px" });
+}
+function submitNewCustomer() {
+  const name = document.getElementById("custName").value.trim();
+  if (!name) {
+    showToast("Il nome del cliente è obbligatorio", "error", "error");
+    return;
+  }
+  const email = document.getElementById("custEmail").value.trim() || "—";
+  const phone = document.getElementById("custPhone").value.trim() || "—";
+  CUSTOMERS_TABLE.unshift({ name, email, phone, bookings: 0, last: "—" });
+  CUSTOMERS_TOTAL_COUNT++;
+  closeModal();
+  showToast(`${name} aggiunto all'anagrafica`, "success", "check_circle");
+  if (currentView === "clienti") renderView("clienti");
 }
 
 // ==================================================================

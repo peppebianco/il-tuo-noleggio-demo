@@ -19,11 +19,6 @@ const VIEW_RENDERERS = {
 
 let currentView = "pianificazione";
 
-// Sezioni in cui ha senso creare una nuova prenotazione al volo.
-// Nelle altre (inventario, voucher, analytics, clienti, partner, recensioni,
-// chat) il pulsante in alto viene nascosto perché fuori contesto.
-const NEW_BOOKING_BTN_VIEWS = new Set(["pianificazione", "logistica", "attivi", "prenotazioni", "sospeso"]);
-
 function renderView(name) {
   if (!VIEW_RENDERERS[name]) name = "pianificazione";
   currentView = name;
@@ -35,8 +30,6 @@ function renderView(name) {
   document.querySelectorAll(".nav-item").forEach(el => {
     el.classList.toggle("active", el.dataset.view === name);
   });
-
-  document.getElementById("newBookingBtn").classList.toggle("hidden", !NEW_BOOKING_BTN_VIEWS.has(name));
 
   if (location.hash.replace("#", "") !== name) {
     history.replaceState(null, "", "#" + name);

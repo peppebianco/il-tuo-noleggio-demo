@@ -133,6 +133,8 @@ const CUSTOMERS_TABLE = [
   { name: "Zsófia Tóth", email: "zsofia.toth@example.com", phone: "+36 30 555 0491", bookings: 3, last: "02/06/2026" },
   { name: "Tommaso Ferraro", email: "tommaso.ferraro@example.com", phone: "+39 320 555 0142", bookings: 2, last: "24/07/2026" },
 ];
+// Numero totale di clienti in anagrafica: la tabella sopra mostra solo un estratto.
+let CUSTOMERS_TOTAL_COUNT = 486;
 
 // --- Partner / Codici Promo ---
 const PROMO_CODES = [
