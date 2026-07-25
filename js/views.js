@@ -827,49 +827,149 @@ function view_recensioni() {
 // CHAT CLIENTI
 // ==================================================================
 function view_chat() {
+  const botCount = CHATS.filter(c => c.botActive).length;
+  const manualCount = CHATS.length - botCount;
+
   const contacts = CHATS.map((c, i) => `
     <div class="chat-contact ${i === uiState.chatActive ? "active" : ""}" onclick="chatSelect(${i})">
       <div class="avatar" style="width:40px;height:40px;font-size:14px;">${c.name.charAt(0)}</div>
       <div style="flex:1;min-width:0;">
         <div class="cname">${escapeHtml(c.name)}</div>
         <div class="clast">${escapeHtml(c.last)}</div>
+        <span class="bot-badge ${c.botActive ? "on" : "off"}">${c.botActive ? "🤖 Bot attivo" : "👤 Operatore"}</span>
       </div>
       ${c.unread ? `<span class="pill blue">${c.unread}</span>` : ""}
     </div>
   `).join("");
 
   const active = CHATS[uiState.chatActive];
-  const messages = active.messages.map(m => `
-    <div class="msg ${m.from === "me" ? "out" : "in"}">${escapeHtml(m.text)}<span class="mt">${m.time}</span></div>
-  `).join("");
+  const messages = active.messages.map(m => {
+    if (m.from === "system") {
+      return `<div class="msg system">${escapeHtml(m.text)}</div>`;
+    }
+    const cls = m.from === "me" ? "out" : (m.from === "bot" ? "bot" : "in");
+    const label = m.from === "bot" ? `<span class="msg-label">🤖 Chatbot</span>` : (m.from === "me" ? `<span class="msg-label">Tu (operatore)</span>` : "");
+    return `<div class="msg ${cls}">${label}${escapeHtml(m.text)}<span class="mt">${m.time}</span></div>`;
+  }).join("");
 
   return `
-    <div class="view-header"><div><h1 class="view-title">Chat Clienti</h1><p class="view-subtitle">Conversazioni WhatsApp centralizzate.</p></div></div>
+    <div class="view-header">
+      <div>
+        <h1 class="view-title">Chat Clienti</h1>
+        <p class="view-subtitle">Conversazioni del chatbot automatico integrato nel tuo sito web.</p>
+      </div>
+    </div>
+
+    <div class="chatbot-banner">
+      <div class="chatbot-banner-icon">${icon("smart_toy")}</div>
+      <div>
+        <div class="chatbot-banner-title">Chatbot automatico sempre attivo</div>
+        <div class="chatbot-banner-text">Il chatbot è integrato direttamente nel tuo sito e risponde da solo ai clienti 24/7 (disponibilità, prezzi, voucher...). Da questa sezione puoi leggere ogni conversazione in tempo reale, lasciare che sia il bot a rispondere oppure premere <b>"Prendi in carico"</b> per intervenire di persona quando serve.</div>
+      </div>
+    </div>
+
+    <div class="stat-grid" style="grid-template-columns:repeat(2,1fr);">
+      <div class="stat-card">
+        <div class="stat-label">Gestite dal bot <span class="stat-icon" style="background:var(--green-soft);color:var(--green);">${icon("smart_toy")}</span></div>
+        <div class="stat-value">${botCount}</div>
+        <div class="stat-sub">su ${CHATS.length} conversazioni attive</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Prese in carico manualmente <span class="stat-icon" style="background:var(--orange-soft);color:var(--orange);">${icon("support_agent")}</span></div>
+        <div class="stat-value">${manualCount}</div>
+        <div class="stat-sub">da un operatore dello staff</div>
+      </div>
+    </div>
+
     <div class="chat-shell">
       <div class="chat-contacts">${contacts}</div>
       <div class="chat-panel">
         <div class="chat-head">
           <div class="avatar" style="width:34px;height:34px;font-size:13px;">${active.name.charAt(0)}</div>
-          ${escapeHtml(active.name)}
+          <div style="flex:1;">
+            ${escapeHtml(active.name)}
+            <div style="font-size:11px;font-weight:600;color:var(--text-faint);">${active.botActive ? "Il chatbot sta rispondendo automaticamente" : "Conversazione presa in carico da un operatore"}</div>
+          </div>
+          <button class="btn small ${active.botActive ? "green" : "on"}" onclick="toggleChatBot()">
+            ${active.botActive ? icon("support_agent") + " Prendi in carico" : icon("smart_toy") + " Riattiva bot"}
+          </button>
         </div>
         <div class="chat-messages" id="chatMessages">${messages}</div>
         <div class="chat-input">
-          <input id="chatInput" placeholder="Scrivi un messaggio..." onkeydown="if(event.key==='Enter') chatSend();">
-          <button onclick="chatSend()">${icon("send")}</button>
+          <button class="icon-action" id="chatSimulateBtn" title="Simula un nuovo messaggio del cliente" onclick="simulateIncomingMessage()">${icon("science")}</button>
+          <input id="chatInput" placeholder="${active.botActive ? "Scrivi per rispondere tu al posto del bot..." : "Scrivi un messaggio..."}" onkeydown="if(event.key==='Enter') chatSend();">
+          <button id="chatSendBtn" onclick="chatSend()">${icon("send")}</button>
         </div>
       </div>
     </div>
   `;
 }
 function chatSelect(i) { uiState.chatActive = i; renderView("chat"); }
+
+function scrollChatToBottom() {
+  const box = document.getElementById("chatMessages");
+  if (box) box.scrollTop = box.scrollHeight;
+}
+
+function toggleChatBot() {
+  const chat = CHATS[uiState.chatActive];
+  chat.botActive = !chat.botActive;
+  chat.messages.push({
+    from: "system",
+    text: chat.botActive ? "Il bot ha ripreso il controllo della conversazione" : "Un operatore ha preso in carico la conversazione",
+    time: "ora",
+  });
+  showToast(chat.botActive ? "Bot riattivato per questa conversazione" : "Hai preso in carico la conversazione", "success", chat.botActive ? "smart_toy" : "support_agent");
+  renderView("chat");
+  scrollChatToBottom();
+}
+
 function chatSend() {
   const input = document.getElementById("chatInput");
   const text = input.value.trim();
   if (!text) return;
-  CHATS[uiState.chatActive].messages.push({ from: "me", text, time: "ora" });
-  CHATS[uiState.chatActive].last = text;
+  const chat = CHATS[uiState.chatActive];
+
+  const wasBotActive = chat.botActive;
+  if (wasBotActive) {
+    chat.botActive = false;
+    chat.messages.push({ from: "system", text: "Un operatore ha preso in carico la conversazione", time: "ora" });
+  }
+  chat.messages.push({ from: "me", text, time: "ora" });
+  chat.last = text;
   input.value = "";
   renderView("chat");
-  const box = document.getElementById("chatMessages");
-  if (box) box.scrollTop = box.scrollHeight;
+  scrollChatToBottom();
+  if (wasBotActive) {
+    showToast("Hai risposto tu: il bot si è messo in pausa per questa chat", "info", "support_agent");
+  }
+}
+
+function simulateIncomingMessage() {
+  const chat = CHATS[uiState.chatActive];
+  const demoQuestions = [
+    "È possibile avere l'auto anche di domenica?",
+    "Quanto costa un giorno extra?",
+    "Posso pagare con carta al ritiro?",
+    "C'è penale per la restituzione in anticipo?",
+  ];
+  const question = demoQuestions[Math.floor(Math.random() * demoQuestions.length)];
+  chat.messages.push({ from: "them", text: question, time: "ora" });
+  chat.last = question;
+  renderView("chat");
+  scrollChatToBottom();
+
+  if (chat.botActive) {
+    setTimeout(() => {
+      const reply = BOT_AUTO_REPLIES[Math.floor(Math.random() * BOT_AUTO_REPLIES.length)];
+      chat.messages.push({ from: "bot", text: reply, time: "ora" });
+      chat.last = reply;
+      if (currentView === "chat") {
+        renderView("chat");
+        scrollChatToBottom();
+      }
+    }, 1100);
+  } else {
+    showToast("Nuovo messaggio cliente: nessuna risposta automatica, la chat è in gestione manuale", "info", "notifications");
+  }
 }

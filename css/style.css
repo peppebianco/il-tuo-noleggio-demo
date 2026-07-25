@@ -435,16 +435,36 @@ tbody tr:hover{background:var(--card-hover);}
 .chat-contact:hover,.chat-contact.active{background:var(--card-hover);}
 .chat-contact .cname{font-weight:700;font-size:13.5px;}
 .chat-contact .clast{font-size:11.5px;color:var(--text-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px;}
+.bot-badge{display:inline-block;margin-top:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:7px;letter-spacing:.2px;}
+.bot-badge.on{background:var(--green-soft);color:var(--green);}
+.bot-badge.off{background:var(--orange-soft);color:var(--orange);}
 .chat-panel{background:var(--card);border:1px solid var(--border-soft);border-radius:var(--radius-lg);display:flex;flex-direction:column;}
 .chat-head{padding:16px 20px;border-bottom:1px solid var(--border-soft);font-weight:700;display:flex;align-items:center;gap:10px;}
 .chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;}
 .msg{max-width:65%;padding:10px 14px;border-radius:14px;font-size:13.5px;line-height:1.4;}
 .msg.in{background:var(--card-2);align-self:flex-start;border-bottom-left-radius:4px;}
+.msg.bot{background:var(--blue-soft);color:var(--text);align-self:flex-start;border-bottom-left-radius:4px;border:1px solid rgba(63,108,245,.3);}
 .msg.out{background:var(--accent-grad);color:#fff;align-self:flex-end;border-bottom-right-radius:4px;}
+.msg.system{align-self:center;background:transparent;color:var(--text-faint);font-size:11.5px;font-weight:600;padding:4px 10px;max-width:none;}
+.msg-label{display:block;font-size:10.5px;font-weight:800;letter-spacing:.3px;opacity:.75;margin-bottom:3px;}
 .msg .mt{display:block;font-size:10px;opacity:.65;margin-top:4px;}
 .chat-input{display:flex;gap:10px;padding:14px 16px;border-top:1px solid var(--border-soft);}
 .chat-input input{flex:1;background:var(--card-2);border:1px solid var(--border);border-radius:12px;padding:11px 14px;color:var(--text);outline:none;}
-.chat-input button{background:var(--accent-grad);border:none;color:#fff;width:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;}
+.chat-input > button{background:var(--accent-grad);border:none;color:#fff;width:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+.chatbot-banner{
+  display:flex;gap:16px;align-items:flex-start;
+  background:linear-gradient(135deg,rgba(63,108,245,.12),rgba(63,108,245,.03));
+  border:1px solid rgba(63,108,245,.3);border-radius:var(--radius-lg);
+  padding:18px 22px;margin-bottom:20px;
+}
+.chatbot-banner-icon{
+  width:42px;height:42px;border-radius:12px;flex-shrink:0;
+  background:var(--blue-soft);color:#7d9bff;
+  display:flex;align-items:center;justify-content:center;
+}
+.chatbot-banner-title{font-weight:800;font-size:14.5px;margin-bottom:6px;}
+.chatbot-banner-text{font-size:13px;color:var(--text-dim);line-height:1.55;}
 
 /* ---------- RECENSIONI ---------- */
 .review-card{background:var(--card);border:1px solid var(--border-soft);border-radius:var(--radius-lg);padding:18px 20px;display:flex;flex-direction:column;gap:8px;}

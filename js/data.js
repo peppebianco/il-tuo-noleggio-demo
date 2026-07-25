@@ -158,27 +158,40 @@ const REVIEWS = [
   { name: "Petra K.", stars: 3, date: "20/06/2026", text: "Scooter comodo ma la comunicazione whatsapp poteva essere più rapida." },
 ];
 
-// --- Chat clienti ---
+// --- Chat Clienti: conversazioni del chatbot automatico integrato nel sito ---
+// "botActive": true  -> il bot risponde in autonomia ai messaggi del cliente
+// "botActive": false -> un operatore ha preso in carico la conversazione
 const CHATS = [
-  { name: "Riccardo Gallo", last: "Perfetto, a che ora possiamo ritirare l'auto?", unread: 2, messages: [
+  { name: "Riccardo Gallo", last: "Perfetto, a che ora possiamo ritirare l'auto?", unread: 2, botActive: true, messages: [
     { from: "them", text: "Ciao! Confermo la prenotazione per domani.", time: "09:12" },
-    { from: "me", text: "Perfetto, vi aspettiamo in aeroporto alle 09:30.", time: "09:14" },
+    { from: "bot", text: "Perfetto Riccardo! Il ritiro è confermato per le 09:30 in Aeroporto di Costalunga. Vuoi aggiungere un seggiolino o altri extra?", time: "09:12" },
     { from: "them", text: "Perfetto, a che ora possiamo ritirare l'auto?", time: "09:20" },
   ]},
-  { name: "Ilse Van der Berg", last: "Grazie mille, tutto chiaro!", unread: 0, messages: [
+  { name: "Ilse Van der Berg", last: "Grazie mille, tutto chiaro!", unread: 0, botActive: true, messages: [
     { from: "them", text: "Salve, la vespa ha il bauletto incluso?", time: "ieri" },
-    { from: "me", text: "Sì, è incluso senza costi aggiuntivi.", time: "ieri" },
+    { from: "bot", text: "Sì Ilse, il bauletto è incluso senza costi aggiuntivi 😊", time: "ieri" },
     { from: "them", text: "Grazie mille, tutto chiaro!", time: "ieri" },
   ]},
-  { name: "Nadia Kowalski", last: "Ok vi mando la carta d'identità ora", unread: 1, messages: [
+  { name: "Nadia Kowalski", last: "Ok vi mando la carta d'identità ora", unread: 1, botActive: false, messages: [
+    { from: "them", text: "Buongiorno, devo caricare un documento per il noleggio?", time: "07:55" },
+    { from: "bot", text: "Ciao Nadia! Per la verifica del documento ti metto in contatto con un operatore del nostro staff.", time: "07:56" },
+    { from: "system", text: "Un operatore ha preso in carico la conversazione", time: "08:00" },
     { from: "me", text: "Buongiorno, ci servirebbe una copia del documento prima del ritiro.", time: "08:02" },
     { from: "them", text: "Ok vi mando la carta d'identità ora", time: "08:10" },
   ]},
-  { name: "Francesca Iannone", last: "Va bene, confermo il voucher", unread: 0, messages: [
+  { name: "Francesca Iannone", last: "Va bene, confermo il voucher", unread: 0, botActive: true, messages: [
     { from: "them", text: "Buongiorno, avrei bisogno del voucher per Villa Aurora Resort.", time: "lun" },
-    { from: "me", text: "Certamente, lo inviamo entro oggi via email.", time: "lun" },
+    { from: "bot", text: "Certo Francesca! Il voucher verrà inviato automaticamente alla tua email entro oggi.", time: "lun" },
     { from: "them", text: "Va bene, confermo il voucher", time: "lun" },
   ]},
+];
+
+// Risposte automatiche di esempio che il bot invia quando si simula un nuovo messaggio cliente
+const BOT_AUTO_REPLIES = [
+  "Grazie per il messaggio! Un attimo che controllo la disponibilità 🚗",
+  "Certo, posso confermartelo subito: il veicolo risulta disponibile per le date richieste.",
+  "Ricevuto! Se vuoi posso anche inviarti il preventivo aggiornato via email.",
+  "Perfetto, ho segnato la tua richiesta. Ti risponderà a breve anche un operatore se necessario.",
 ];
 
 // --- Notifiche ---
