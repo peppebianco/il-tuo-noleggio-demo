@@ -23,6 +23,8 @@ function icon(name, extraClass = "") {
   return `<span class="material-symbols-outlined ${extraClass}">${name}</span>`;
 }
 
+const STATUS_PILL_CLASS = { "Confermata": "blue", "Attiva": "green", "Completata": "gray", "Annullata": "red" };
+
 // ==================================================================
 // PIANIFICAZIONE
 // ==================================================================
@@ -294,7 +296,7 @@ function view_prenotazioni() {
     filtered = filtered.filter(b => (b.customer + b.vehicle + b.id).toLowerCase().includes(q));
   }
 
-  const pillClass = { "Confermata": "blue", "Attiva": "green", "Completata": "gray", "Annullata": "red" };
+  const pillClass = STATUS_PILL_CLASS;
 
   const rowsHtml = filtered.slice(0, 60).map((b, i) => `
     <tr>
@@ -456,7 +458,7 @@ function view_inventario() {
       <div class="disp-row"><span>Disponibilità</span><span>${totalAvail} / ${totalStock + 1}</span></div>
       <div class="progress"><div style="width:${pct}%;"></div></div>
       <div class="vcard-actions">
-        <button class="icon-action" title="Anteprima" onclick="openInfoModal('${escapeHtml(v.name)}',[{label:'Prezzo/giorno',value:'€${v.price}'},{label:'Costalunga',value:'${v.bari} disponibili'},{label:'Marenova',value:'${v.monopoli} disponibili'}],'visibility')">${icon("visibility")}</button>
+        <button class="icon-action" title="Anteprima" onclick="openVehicleDetail('${v.id}')">${icon("visibility")}</button>
         <button class="icon-action" title="Manutenzione" onclick="showToast('Veicolo segnato in manutenzione (demo)','success','build')">${icon("build")}</button>
         <button class="icon-action edit" title="Modifica" onclick="openEditVehicle('${v.id}')">${icon("edit")}</button>
         <button class="icon-action del" title="Elimina" onclick="confirmAction('Eliminare ${escapeHtml(v.name)} dall\\'inventario?', () => { showToast('Veicolo eliminato (demo)','success','delete'); }, 'Elimina', true)">${icon("delete")}</button>
@@ -657,6 +659,231 @@ function submitEditVehicle(id) {
   closeModal();
   showToast("Modifiche salvate", "success", "check_circle");
   if (currentView === "inventario") renderView("inventario");
+}
+
+// ==================================================================
+// DETTAGLIO VEICOLO (drill-down dalla scheda Inventario)
+// ==================================================================
+const vehicleDetailState = {
+  id: null,
+  calMonth: new Date().getMonth(),
+  calYear: new Date().getFullYear(),
+  unitsExpanded: {},
+  bookingsExpanded: false,
+};
+
+function openVehicleDetail(id) {
+  vehicleDetailState.id = id;
+  const now = new Date();
+  vehicleDetailState.calMonth = now.getMonth();
+  vehicleDetailState.calYear = now.getFullYear();
+  vehicleDetailState.unitsExpanded = {};
+  vehicleDetailState.bookingsExpanded = false;
+  renderVehicleDetail();
+}
+
+function renderVehicleDetail() {
+  currentView = "inventario";
+  const root = document.getElementById("viewRoot");
+  root.innerHTML = view_vehicle_detail();
+  root.scrollTop = 0;
+  window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+  document.querySelectorAll(".nav-item").forEach(el => {
+    el.classList.toggle("active", el.dataset.view === "inventario");
+  });
+}
+
+function vehicleDayOccupancy(vIndex, year, month, day) {
+  const seed = vIndex * 401 + year * 17 + month * 31 + day * 7;
+  const r = seededRand(seed);
+  if (r > 0.86) return 3;
+  if (r > 0.45) return 1 + Math.floor(seededRand(seed + 1) * 2);
+  return 0;
+}
+
+function vehicleDetailCalendar(vIndex) {
+  const { calMonth, calYear } = vehicleDetailState;
+  const firstOfMonth = new Date(calYear, calMonth, 1);
+  let startWeekday = firstOfMonth.getDay() - 1;
+  if (startWeekday < 0) startWeekday = 6;
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+  let monthCount = 0;
+  const cells = [];
+  for (let i = 0; i < startWeekday; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) {
+    const occ = vehicleDayOccupancy(vIndex, calYear, calMonth, d);
+    monthCount += occ;
+    cells.push({ day: d, occ });
+  }
+
+  const dowHtml = DOW_SHORT.slice(1).concat(DOW_SHORT[0]).map(d => `<div class="vdetail-dow">${d.toUpperCase().slice(0, 2)}</div>`).join("");
+  const cellsHtml = cells.map(c => {
+    if (!c) return `<div class="vdetail-cal-day empty"></div>`;
+    let cls = "vdetail-cal-day";
+    if (c.occ === 0) cls += " free";
+    else if (c.occ >= 3) cls += " high";
+    else cls += " low";
+    return `<div class="${cls}">${c.day}${c.occ > 0 ? `<span class="vdetail-cal-count">${c.occ}</span>` : ""}</div>`;
+  }).join("");
+
+  return { html: `<div class="vdetail-cal-grid">${dowHtml}${cellsHtml}</div>`, monthCount };
+}
+
+function vehicleDetailChangeMonth(delta) {
+  vehicleDetailState.calMonth += delta;
+  if (vehicleDetailState.calMonth < 0) { vehicleDetailState.calMonth = 11; vehicleDetailState.calYear--; }
+  if (vehicleDetailState.calMonth > 11) { vehicleDetailState.calMonth = 0; vehicleDetailState.calYear++; }
+  renderVehicleDetail();
+}
+
+function toggleVehicleUnit(i) {
+  vehicleDetailState.unitsExpanded[i] = !vehicleDetailState.unitsExpanded[i];
+  renderVehicleDetail();
+}
+function toggleVehicleBookingsList() {
+  vehicleDetailState.bookingsExpanded = !vehicleDetailState.bookingsExpanded;
+  renderVehicleDetail();
+}
+
+function view_vehicle_detail() {
+  const v = VEHICLES.find(x => x.id === vehicleDetailState.id);
+  if (!v) return `<div class="empty-state">${icon("error")}<div>Veicolo non trovato</div></div>`;
+  const vIndex = VEHICLES.indexOf(v);
+  const totalUnits = Math.max(v.bari + v.monopoli, 1);
+  const lifetimeBookings = Math.round(18 + seededRand(vIndex + 1) * 55);
+  const today = new Date();
+  const upcoming = BOOKINGS.filter(b => b.vehicle === v.name && b.start >= today && (b.status === "Confermata" || b.status === "Attiva")).sort((a, b) => a.start - b.start);
+
+  const { html: calGrid, monthCount } = vehicleDetailCalendar(vIndex);
+
+  const unitsHtml = Array.from({ length: totalUnits }).map((_, i) => {
+    const expanded = !!vehicleDetailState.unitsExpanded[i];
+    const occupied = seededRand(vIndex * 71 + i * 13) > 0.4;
+    const plate = `${String.fromCharCode(65 + (i % 26))}${String.fromCharCode(66 + ((i * 3) % 26))} ${100 + i * 37}${String.fromCharCode(88 + (i % 3))}`;
+    const km = Math.round(8000 + seededRand(vIndex * 19 + i) * 60000).toLocaleString("it-IT");
+    return `
+      <div class="vdetail-unit">
+        <div class="vdetail-unit-row" onclick="toggleVehicleUnit(${i})">
+          <span class="pill blue">${i + 1}</span>
+          <span class="tag" style="flex:1;">${escapeHtml(v.name)} (${v.cat === "SCOOTER" ? "Scooter" : "Auto"}) ${i + 1}</span>
+          <select class="select-pill" onclick="event.stopPropagation()" onchange="showToast('Sede aggiornata a ' + this.value,'success')">
+            <option>Non definita</option>
+            ${LOCATIONS.map(l => `<option>${escapeHtml(l)}</option>`).join("")}
+          </select>
+          <span class="pill ${occupied ? "orange" : "green"}">${occupied ? "● OCCUPATA" : "● LIBERA"}</span>
+          <span class="material-symbols-outlined vdetail-chevron ${expanded ? "open" : ""}">expand_more</span>
+        </div>
+        ${expanded ? `
+          <div class="vdetail-unit-detail">
+            <div><span>Targa</span><b>${plate}</b></div>
+            <div><span>Chilometraggio</span><b>${km} km</b></div>
+            <div><span>Ultima manutenzione</span><b>${fmtDate(addDays(today, -Math.round(10 + seededRand(vIndex + i) * 60)))}</b></div>
+          </div>
+        ` : ""}
+      </div>
+    `;
+  }).join("");
+
+  const upcomingHtml = upcoming.length ? upcoming.map(b => `
+    <div class="info-row" style="padding:12px 16px;">
+      <div class="info-main">
+        <div class="info-title-row"><span class="info-title" style="font-size:13.5px;">${escapeHtml(b.customer)}</span><span class="pill ${STATUS_PILL_CLASS[b.status]}">${b.status}</span></div>
+        <div class="info-loc">${icon("event")} ${fmtDate(b.start)} → ${fmtDate(b.end)} · ${fmtEuro(b.total)}</div>
+      </div>
+    </div>
+  `).join("") : `<div class="empty-state" style="padding:24px;">${icon("event_busy")}<div>Nessuna prenotazione futura per questo veicolo</div></div>`;
+
+  return `
+    <div class="vdetail-header">
+      <button class="btn subtle vdetail-back" onclick="renderView('inventario')">${icon("arrow_back")}</button>
+      <div style="flex:1;">
+        <h1 class="view-title" style="display:inline;">${escapeHtml(v.name.toUpperCase())}</h1>
+        <span class="vdetail-meta">(ID: ${escapeHtml(v.id)}, Prenotazioni: ${lifetimeBookings})</span>
+        <p class="view-subtitle">Gestione completa unità, manutenzione e note.</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn danger-outline" onclick="confirmAction('Eliminare definitivamente il modello ${escapeHtml(v.name)} e tutte le sue unità?', () => { showToast('Modello eliminato (demo)','success','delete'); renderView('inventario'); }, 'Elimina', true)">${icon("delete")} Elimina Modello</button>
+        <button class="btn-primary" onclick="showToast('Nuova unità aggiunta alla flotta (demo)','success','add')">${icon("add")} Aggiungi Unità</button>
+      </div>
+    </div>
+
+    <div class="vdetail-grid">
+      <div class="vdetail-col">
+        <div class="vdetail-image">${icon(v.cat === "SCOOTER" ? "two_wheeler" : "directions_car")}</div>
+        <div class="card vdetail-info-card">
+          <div class="vdetail-info-row"><span>Categoria</span><b>${v.cat === "SCOOTER" ? "SCOOTER" : "AUTO"}</b></div>
+          <div class="vdetail-info-row"><span>Prezzo/gg</span><b>€ ${v.price}</b></div>
+          <div class="vdetail-info-row"><span>Totale Flotta</span><b>${totalUnits} unità</b></div>
+          <div class="vdetail-info-row"><span>Attive</span><b>${totalUnits}</b></div>
+          <div class="vdetail-info-row"><span>In Manutenzione</span><b>0</b></div>
+        </div>
+
+        <div class="card">
+          <div class="vdetail-section-title">${icon("settings")} Azioni Rapide</div>
+          <div class="vdetail-actions-stack">
+            <button class="btn" onclick="showToast('Unità singola aggiunta (demo)','success','add')">${icon("add")} Aggiungi Unità Singola</button>
+            <button class="btn on" onclick="showToast('Pianificazione ferie aperta (demo)','info','calendar_month')">${icon("calendar_month")} Pianifica Ferie</button>
+            <button class="btn danger-outline" onclick="confirmAction('Eliminare l\\'intero modello ${escapeHtml(v.name)}?', () => { showToast('Modello eliminato (demo)','success','delete'); renderView('inventario'); }, 'Elimina', true)">${icon("delete")} Elimina Intero Modello</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="vdetail-section-title">${icon("event")} Ferie / Blocchi Attivi</div>
+          <p style="color:var(--text-faint);font-size:13px;font-style:italic;margin:0;">Nessuna ferie pianificata</p>
+        </div>
+      </div>
+
+      <div class="vdetail-col">
+        <div class="vdetail-toolbar">
+          <h3 style="margin:0;font-size:17px;">${icon("directions_car")} Monitoraggio Targhe</h3>
+          <button class="btn small on" onclick="showToast('Nuova unità aggiunta (demo)','success','add')">${icon("add")} Unità</button>
+          <select class="select-pill" style="margin-left:auto;" onchange="showToast('Filtro aggiornato: ' + this.value,'info')">
+            <option>Tutte le unità</option>
+            ${Array.from({ length: totalUnits }).map((_, i) => `<option>Unità ${i + 1}</option>`).join("")}
+          </select>
+          <span class="date-field">${fmtDate(new Date())}</span>
+        </div>
+
+        <div class="card">
+          <div class="vdetail-cal-head">
+            <div class="vdetail-section-title" style="margin:0;">${icon("calendar_month")} Calendario Disponibilità</div>
+            <div class="date-nav" style="margin-left:auto;">
+              <button onclick="vehicleDetailChangeMonth(-1)">${icon("chevron_left")}</button>
+              <span style="font-weight:700;font-size:13.5px;">${MONTHS[vehicleDetailState.calMonth]} ${vehicleDetailState.calYear} <span style="color:var(--text-faint);font-weight:600;">(${monthCount})</span></span>
+              <button onclick="vehicleDetailChangeMonth(1)">${icon("chevron_right")}</button>
+            </div>
+          </div>
+          ${calGrid}
+          <div class="legend" style="margin-top:18px;">
+            <span><span class="dot" style="background:var(--card-2);border:1px solid var(--border);"></span>Libero</span>
+            <span><span class="dot" style="background:var(--blue);"></span>1-2 Prenotazioni</span>
+            <span><span class="dot" style="background:#c9601b;"></span>Alta Occupazione</span>
+            <span>🌴 Ferie / Blocco</span>
+          </div>
+        </div>
+
+        <div class="card" style="padding:0;overflow:hidden;">
+          ${unitsHtml}
+        </div>
+
+        <div class="card">
+          <div class="vdetail-section-title">${icon("payments")} Prezzi per Periodo</div>
+          <p style="color:var(--text-faint);font-size:13px;margin:0 0 14px;">Nessuna regola — verrà usato il prezzo base del modello.</p>
+          <button class="btn-primary small" onclick="showToast('Nuova regola prezzo creata (demo)','success','add')">${icon("add")} Nuova Regola</button>
+        </div>
+
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div class="vdetail-collapsible-head" onclick="toggleVehicleBookingsList()">
+            <div class="vdetail-section-title" style="margin:0;">${icon("description")} Elenco Prossime Prenotazioni</div>
+            <span class="pill blue">${upcoming.length} Totali</span>
+            <span class="material-symbols-outlined vdetail-chevron ${vehicleDetailState.bookingsExpanded ? "open" : ""}">expand_more</span>
+          </div>
+          ${vehicleDetailState.bookingsExpanded ? `<div class="vdetail-bookings-list">${upcomingHtml}</div>` : ""}
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 // ==================================================================
